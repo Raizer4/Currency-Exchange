@@ -1,81 +1,87 @@
 package dao;
 
+import mappers.ResultSetMapper;
 import utils.ConnectionManager;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+
 import model.Currency;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CurrencyDAO {
-    public static List<Currency> findAll() throws SQLException {
-        List<Currency> result = new ArrayList<>();
+public class CurrencyDAO implements BaseDAO<Currency>{
 
+    public static final CurrencyDAO INSTANCE = new CurrencyDAO();
+
+    @Override
+    public List<Currency> findAll() throws SQLException {
         try (Connection con = ConnectionManager.open()) {
-            var statement =
-                    con.prepareStatement("""
-                            SELECT * 
-                            FROM currencies
-                            """);
-
+            List<Currency> currencies = new ArrayList<>();
+            var statement = con.prepareStatement("SELECT * FROM currencies");
             var rs = statement.executeQuery();
 
             while (rs.next()) {
-                int id = (int) rs.getLong("id");
-                String code = rs.getString("code");
-                String full_name = rs.getString("fullname");
-                String sign = rs.getString("sign");
-                Currency currency = new Currency(id, code, full_name, sign);
-                result.add(currency);
+                currencies.add(ResultSetMapper.mapToCurrency(rs));
             }
 
+            return currencies;
         } catch (SQLException ex) {
-            throw new RuntimeException();
+            throw new SQLException(ex.getMessage());
         }
 
-        return result;
     }
 
-    public static Currency findCurrencyByCode(String code) throws SQLException {
-
+    @Override
+    public Currency findByCode(String code) throws SQLException {
         try (var con = ConnectionManager.open()) {
-            PreparedStatement stmt = con.prepareStatement("""
-                    SELECT *
-                    FROM currencies
-                    WHERE code = ?
-                    """);
+            PreparedStatement stmt = con.prepareStatement("SELECT * FROM currencies where code = ?");
             stmt.setString(1, code);
-
             var rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                return new Currency((int) rs.getLong("id"), rs.getString("code"), rs.getString("fullname"), rs.getString("sign"));
+            if (rs.next()) {
+                return ResultSetMapper.mapToCurrency(rs);
+            }else {
+                return null;
             }
 
-            return null;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new SQLException(e.getMessage());
         }
-
     }
 
-    public static void addCurrency(String name, String code, String sign) throws SQLException {
-
+    @Override
+    public void create(Currency currency) throws SQLException {
         try (var con = ConnectionManager.open()) {
             PreparedStatement statement = con.prepareStatement("INSERT INTO currencies(code, fullname, sign) VALUES (?,?,?)");
-
-            statement.setString(1, code);
-            statement.setString(2, name);
-            statement.setString(3, sign);
-
+            statement.setString(1, currency.code());
+            statement.setString(2, currency.fullName());
+            statement.setString(3, currency.sign());
             statement.executeUpdate();
+        }catch (SQLException e){
+            throw new SQLException(e);
+        }
+    }
+
+    public static Currency findById(int id) throws SQLException{
+
+        try(var con = ConnectionManager.open()){
+           var stmt = con.prepareStatement("select * from currencies where id = ?");
+           stmt.setInt(1,id);
+           var rs = stmt.executeQuery();
+
+           if(rs.next()){
+               return ResultSetMapper.mapToCurrency(rs);
+           }else {
+               return null;
+           }
+        } catch (SQLException e) {
+            throw new SQLException(e.getMessage());
         }
 
     }
+
+
 
 
 

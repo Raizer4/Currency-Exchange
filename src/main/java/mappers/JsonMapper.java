@@ -14,7 +14,7 @@ public class JsonMapper {
    }
 
 
-   public static String getMapper(Object obj) {
+   public static String toJson(Object obj) {
       try {
          return objectMapper.writeValueAsString(obj);
       } catch (JsonProcessingException e) {
