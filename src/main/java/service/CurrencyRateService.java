@@ -37,5 +37,8 @@ public class CurrencyRateService {
         currencyRateDAO.create(new CurrencyRate(0,base,target,BigDecimal.valueOf(Long.parseLong(rate))));
     }
 
+    public void update(CurrencyRate currencyRate, BigDecimal rate) throws SQLException {
+        currencyRateDAO.update(currencyRate,rate);
+    }
 
 }

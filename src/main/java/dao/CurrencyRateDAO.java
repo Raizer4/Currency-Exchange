@@ -73,6 +73,18 @@ public class CurrencyRateDAO implements BaseDAO<CurrencyRate>{
         }
     }
 
+    public void update(CurrencyRate currencyRate, BigDecimal rate) throws SQLException {
 
+        try(var con = ConnectionManager.open()){
+            var stmt = con.prepareStatement("UPDATE exchangerates SET rate = ? WHERE BaseCurrencyId = ? AND TargetCurrencyId = ?");
+            stmt.setBigDecimal(1,rate);
+            stmt.setInt(2,currencyRate.baseCurrency().id());
+            stmt.setInt(3,currencyRate.targetCurrency().id());
+            stmt.executeUpdate();
+        }catch (SQLException e){
+            throw new SQLException(e.getMessage());
+        }
+
+    }
 
 }
